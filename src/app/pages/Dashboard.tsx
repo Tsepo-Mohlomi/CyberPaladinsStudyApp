@@ -10,7 +10,8 @@ import {
   BookOpen, 
   MessageCircle,
   Search,
-  X
+  X,
+  Shield
 } from 'lucide-react';
 
 interface StudyGroup {
@@ -151,6 +152,27 @@ export function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Admin Support Banner */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/private-messages')}
+            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all flex items-center justify-between group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+                <Shield className="w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-lg">Need Help?</h3>
+                <p className="text-sm text-indigo-100">Chat with Admin - Tsepo Mohlomi</p>
+              </div>
+            </div>
+            <div className="text-white group-hover:translate-x-1 transition-transform">
+              →
+            </div>
+          </button>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 shadow-sm">

@@ -3,6 +3,7 @@ import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { Dashboard } from "./pages/Dashboard";
 import { StudyGroup } from "./pages/StudyGroup";
+import { PrivateMessages } from "./pages/PrivateMessages";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
@@ -27,6 +28,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <StudyGroup />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/private-messages",
+    element: (
+      <ProtectedRoute>
+        <PrivateMessages />
       </ProtectedRoute>
     ),
   },

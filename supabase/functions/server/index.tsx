@@ -310,4 +310,131 @@ app.post("/make-server-b2f88e04/study-groups/:id/messages", async (c) => {
   }
 });
 
+// Get private messages with admin (requires auth)
+app.get("/make-server-b2f88e04/private-messages", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: "Unauthorized - no token provided" }, 401);
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+
+    if (error || !user) {
+      console.log(`Authorization error while getting private messages: ${error?.message}`);
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const messages = await kv.getByPrefix(`private-message:${user.id}:`);
+    
+    // Sort messages by timestamp
+    const sortedMessages = (messages || []).sort((a: any, b: any) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    return c.json({ messages: sortedMessages });
+  } catch (error) {
+    console.log(`Server error getting private messages: ${error}`);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Send a private message to admin (requires auth)
+app.post("/make-server-b2f88e04/private-messages", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: "Unauthorized - no token provided" }, 401);
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+
+    if (error || !user) {
+      console.log(`Authorization error while sending private message: ${error?.message}`);
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const { content } = await c.req.json();
+
+    if (!content) {
+      return c.json({ error: "Content is required" }, 400);
+    }
+
+    const userProfile = await kv.get(`user:${user.id}`);
+    const messageId = crypto.randomUUID();
+    const timestamp = new Date().toISOString();
+
+    const message = {
+      id: messageId,
+      userId: user.id,
+      userName: userProfile?.name || user.email,
+      content,
+      isFromAdmin: false,
+      timestamp,
+    };
+
+    await kv.set(`private-message:${user.id}:${timestamp}:${messageId}`, message);
+
+    return c.json({ message });
+  } catch (error) {
+    console.log(`Server error sending private message: ${error}`);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// Admin sends message to user (requires auth and admin check)
+app.post("/make-server-b2f88e04/private-messages/:userId/admin", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: "Unauthorized - no token provided" }, 401);
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+
+    if (error || !user) {
+      console.log(`Authorization error while admin sending message: ${error?.message}`);
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    // Check if user is admin
+    const adminEmail = "tsepomohlomi20041231@gmail.com";
+    if (user.email !== adminEmail) {
+      return c.json({ error: "Forbidden - admin only" }, 403);
+    }
+
+    const targetUserId = c.req.param('userId');
+    const { content } = await c.req.json();
+
+    if (!content) {
+      return c.json({ error: "Content is required" }, 400);
+    }
+
+    const messageId = crypto.randomUUID();
+    const timestamp = new Date().toISOString();
+
+    const message = {
+      id: messageId,
+      userId: targetUserId,
+      userName: "Tsepo Mohlomi (Admin)",
+      content,
+      isFromAdmin: true,
+      timestamp,
+    };
+
+    await kv.set(`private-message:${targetUserId}:${timestamp}:${messageId}`, message);
+
+    return c.json({ message });
+  } catch (error) {
+    console.log(`Server error admin sending private message: ${error}`);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 Deno.serve(app.fetch);
